@@ -2,10 +2,6 @@ variable "environment" {
     type = string
 }
 
-variable "aws_region" {
-    default = "us-east-1"
-}
-
 variable "instance_alias" {
     default = "optum-chat"
 }

@@ -1,0 +1,53 @@
+name: Deploy Amazon Connect + Lex + Lambda
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::479746539485:role/GitHubActions-AmazonConnect
+          aws-region: us-east-1
+
+      - name: Build Lambda
+        run: |
+          cd lambdas/fulfillment
+          zip -r ../../fulfillment.zip lambda_function.py
+
+      - name: Upload Lambda to S3
+        run: |
+          aws s3 cp fulfillment.zip s3://miratech-optum-lambda-code/fulfillment.zip
+
+      - name: Get Lambda Hash
+        id: get_hash
+        run: |
+          HASH=$(openssl dgst -sha256 -binary fulfillment.zip | openssl base64)
+          echo "hash=$HASH" >> $GITHUB_OUTPUT
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: terraform
+        run: terraform init -reconfigure
+
+      - name: Terraform Apply
+        working-directory: terraform
+        run: |
+          terraform apply -auto-approve \
+            -var-file=environments/dev.tfvars \
+            -var="lambda_source_code_hash=${{ steps.get_hash.outputs.hash }}"

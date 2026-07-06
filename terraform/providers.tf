@@ -13,12 +13,10 @@ terraform {
     key            = "amazon-connect-chat/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
-    profile        = "miratech-connect"
-    # dynamodb_table is deprecated, we can remove it or keep for now
+    dynamodb_table = "terraform-lock"
   }
 }
 
 provider "aws" {
-  region  = var.aws_region
-  profile = "miratech-connect"
+  region = var.aws_region
 }

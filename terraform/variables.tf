@@ -15,3 +15,9 @@ variable "lambda_source_code_hash" {
   type        = string
   default     = ""
 }
+
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+  default     = "us-east-1"
+}
